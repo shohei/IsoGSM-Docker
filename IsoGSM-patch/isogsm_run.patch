@@ -1,0 +1,40 @@
+--- a/gsm_runs/runscr/mpisub.in
++++ b/gsm_runs/runscr/mpisub.in
+@@ -68,7 +68,7 @@
+ if [ @NICKNAME@ = naam ] ; then
+ 	args="$args $colon $prog $parm"
+ else
+-	args="$args $colon @NPES_ARG@ $npes $prog $parm"
++	args="$args $colon @NPES_ARG@ $npes $here_dir/$prog $parm"
+ fi
+ 	#
+ 	# remove .* from $prog for beautification
+@@ -82,7 +82,7 @@
+ # remove .x from outs
+ #
+ echo $args
+-@MPIEXEC@  @MPIEXEC_ARGS@ $args 1>$here_dir/$outs.ft$hx 2>&1
++@MPIEXEC@  -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
+ cc=$?
+ #
+ ./mpdexit.sh
+--- a/gsm_runs/runscr/mpisub
++++ b/gsm_runs/runscr/mpisub
+@@ -68,7 +68,7 @@
+ if [ roses = naam ] ; then
+ 	args="$args $colon $prog $parm"
+ else
+-	args="$args $colon -np $npes $prog $parm"
++	args="$args $colon -np $npes $here_dir/$prog $parm"
+ fi
+ 	#
+ 	# remove .* from $prog for beautification
+@@ -82,7 +82,7 @@
+ # remove .x from outs
+ #
+ echo $args
+-mpirun  -hostfile $PBS_NODEFILE $args 1>$here_dir/$outs.ft$hx 2>&1
++mpirun  -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
+ cc=$?
+ #
+ ./mpdexit.sh

@@ -1,0 +1,76 @@
+--- a/def/get_scrvars
++++ b/def/get_scrvars
+@@ -26,7 +26,7 @@
+ echo "RUNS_DIR=$RUNS_DIR" >>scrvars
+ echo "EXPSCR_DIR=$RUNS_DIR/expscr" >>scrvars
+ chmod a+x scrvars
+-. scrvars
++. ./scrvars
+ #
+ #  create file for sed
+ #
+--- a/def/sysvars.defs
++++ b/def/sysvars.defs
+@@ -38,7 +38,7 @@
+ #  is ibm machine at ncar and uses ibmsp compiler, and therefore, it is not 
+ #  necessary to specify MACHINE, COMPILER.
+ #
+-GRSM_BASE_DIR=/rhome/yeong/test/svrtest
++GRSM_BASE_DIR=/data/IsoGSM
+ #    
+ AVAILABLE_MODELS_LIST="gsm rsm crsm nhm roms scm gdas cpl"
+ #
+@@ -166,7 +166,7 @@
+ MACHINE:mac:MODEL_MPI_F77=xlf90
+ MACHINE:macpro:MODEL_MPI_F77=mpif77
+ MACHINE:sx6:MODEL_MPI_F77=sxmpif90
+-COMPILER:intel:MODEL_MPI_F77=ifort
++COMPILER:intel:MODEL_MPI_F77=mpif90
+ NICKNAME:shui:MODEL_MPI_F77=ifort
+ NICKNAME:naam:MODEL_MPI_F77=ifort
+ MACHINE@INSTITUTION:ibmsp@ncar:MODEL_MPI_F77=mpxlf95_r
+@@ -329,7 +329,7 @@
+ #
+ #  14.  MPICH_DIR
+ #
+-MPICH_DIR=
++MPICH_DIR=/usr/local/openmpi
+ MACHINE:dec:MPICH_DIR=/usr/opt/MPI196
+ NICKNAME:shui:MPICH_DIR=/usr
+ NICKNAME:naam:MPICH_DIR=/usr
+@@ -337,8 +337,8 @@
+ NICKNAME:isotope2:MPICH_DIR=/usr/local/openmpi-1.5.4-intel64-v11.1.069
+ NICKNAME:isotope3:MPICH_DIR=/opt/mpich/intel/19.0.3/3.2
+ NICKNAME:creed:MPICH_DIR=/usr/local/mpi/intel/mvapich2-1.8.1
+-NICKNAME:roses:MPICH_DIR=/usr/local/mpi/intel18/mvapich2-2.2
+-NICKNAME:guns:MPICH_DIR=/usr/local/mpi/intel18/mvapich2-2.2
++NICKNAME:roses:MPICH_DIR=/opt/intel/oneapi/mpi/2021.10.0
++NICKNAME:guns:MPICH_DIR=/opt/intel/oneapi/mpi/2021.10.0
+ NICKNAME:ha8000:MPICH_DIR=/opt/itc/mpi/mpich-mx-intel11
+ NICKNAME:dynamic:MPICH_DIR=/usr/geosys/x86_64/mpich/1.2.7p1-intel10
+ MACHINE@INSTITUTION:linux@sdsc:MPICH_DIR=/opt/mpich-vmi-2.0.1-1-gcc
+@@ -381,7 +381,7 @@
+ #  16.  FORECAST MPI MODEL FORT_FLAGS
+ #
+ MODEL_MPI_FORT_FLAGS="-O2"
+-COMPILER:intel:MODEL_MPI_FORT_FLAGS="-r8 -O2 -convert big_endian -I${MPICH_DIR}/include"
++COMPILER:intel:MODEL_MPI_FORT_FLAGS="-r8 -O2 -convert big_endian -shared-intel -mcmodel=medium -I${MPICH_DIR}/include"
+ MACHINE-COMPILER:linux-pgi:MODEL_MPI_FORT_FLAGS="-r8 -O2 -Mrecursive -Mdalign -DLINUX -Mbyteswapio -Mextend -I${MPICH_DIR}/include"
+ MACHINE:tacc:MODEL_MPI_FORT_FLAGS="-r8 -O2 -Mrecursive -Mdalign -DLINUX -Mbyteswapio -I/opt/MPI/pgi/mpich-gm/1.2.5..12a/include"
+ MACHINE-MARCH:ibmsp-mpi:MODEL_MPI_FORT_FLAGS="-O3 -qMARCH=auto -qstrict -qfixed=132 -qrealsize=8 -qnosave -qmaxmem=-1"
+--- a/gsm/configure-model
++++ b/gsm/configure-model
+@@ -4,10 +4,10 @@
+ #  default model library directory, model, model define and institution
+ #
+ MODEL=gsm
+-LIBS_DIR=/rhome/eunchul/GRSM/IsoGSM/libs
++LIBS_DIR=/data/IsoGSM/libs
+ MODEL_DEFINE=`pwd`/../def/def_gsm/gsm62k28
+-NPES=36
+-NCOL=4
++NPES=${NPES:-$(nproc)}
++NCOL=
+ MARCH=mpi
+ #
+ COUPLE_WITH=
