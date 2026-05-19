@@ -1,6 +1,6 @@
 --- a/gsm/src/fcst/wrisig.F
 +++ b/gsm/src/fcst/wrisig.F
-@@ -156,6 +156,11 @@
+@@ -119,6 +119,11 @@
        data fni/'sig','sigp','sigi','sigit','sigitdt'/
        data nchi/3,4,4,5,7/
        character*128 fno
@@ -9,9 +9,9 @@
 +      common /commpi/ npes,ncol,nrow,mype
 +      if (mype .ne. 0) return
 +#endif
+
+ #ifdef NISLQ
        if (itpdt .eq. 1 .or. itpdt .eq. 4 ) then
-         call sph_fft_driver(1,slq_q1,rq,ntotal_)
-       else if (itpdt.eq.2 .or. itpdt.eq.5) then
 --- a/gsm/src/fcst_par/Makefile.in
 +++ b/gsm/src/fcst_par/Makefile.in
 @@ -12,7 +12,7 @@
