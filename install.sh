@@ -43,10 +43,13 @@ docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest 
 EOF
 docker container start isogsm
 echo "****************************************************************"
-echo "IsoGSM installation complete." 
+echo ""
+echo "IsoGSM installation complete."
 echo "The next step is to run the container and execute the script in gsm_runs."
 echo "To access the container, use the following command:"
-echo docker exec -it isogsm /bin/bash
-echo "cd IsoGSM/gsm_runs && ./gsm"
+echo ""
+echo "$ docker exec -it isogsm /bin/bash"
+echo "# cd IsoGSM/gsm_runs && ./gsm"
+echo ""
 echo "****************************************************************"
 echo ""
