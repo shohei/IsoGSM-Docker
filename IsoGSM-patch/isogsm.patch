@@ -58,6 +58,24 @@
  MACHINE-COMPILER:linux-pgi:MODEL_MPI_FORT_FLAGS="-r8 -O2 -Mrecursive -Mdalign -DLINUX -Mbyteswapio -Mextend -I${MPICH_DIR}/include"
  MACHINE:tacc:MODEL_MPI_FORT_FLAGS="-r8 -O2 -Mrecursive -Mdalign -DLINUX -Mbyteswapio -I/opt/MPI/pgi/mpich-gm/1.2.5..12a/include"
  MACHINE-MARCH:ibmsp-mpi:MODEL_MPI_FORT_FLAGS="-O3 -qMARCH=auto -qstrict -qfixed=132 -qrealsize=8 -qnosave -qmaxmem=-1"
+@@ -1445,7 +1445,7 @@
+ NICKNAME-MARCH:roses-mpi:HEADER=<<EOF
+ #!/bin/sh
+ #PBS -l nodes=@NCPU_PER_NODE@:ppn=@NNODES@
+- cd \$PBS_O_WORKDIR
++ [ -n "\$PBS_O_WORKDIR" ] && cd "\$PBS_O_WORKDIR"
+  export LANG=C
+ #
+ ulimit -s unlimited
+@@ -1453,7 +1453,7 @@
+ NICKNAME-MARCH:guns-mpi:HEADER=<<EOF
+ #!/bin/sh
+ #PBS -l nodes=@NCPU_PER_NODE@:ppn=@NNODES@
+- cd \$PBS_O_WORKDIR
++ [ -n "\$PBS_O_WORKDIR" ] && cd "\$PBS_O_WORKDIR"
+  export LANG=C
+ #
+ ulimit -s unlimited
 --- a/gsm/configure-model
 +++ b/gsm/configure-model
 @@ -4,10 +4,10 @@

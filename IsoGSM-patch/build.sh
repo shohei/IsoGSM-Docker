@@ -13,7 +13,20 @@ set -e
 #
 #  Patch application order:
 #    1. isogsm.patch     -- applied before build (source/config changes)
+#         - def/get_scrvars       : fix relative path for scrvars sourcing
+#         - def/sysvars.defs      : set GRSM_BASE_DIR, MPICH_DIR (Open MPI),
+#                                   MPI compiler/flags, PBS_O_WORKDIR guard in
+#                                   roses/guns HEADER
+#         - gsm/configure-model   : set LIBS_DIR, NPES=$(nproc), NCOL auto
 #    2. isogsm_run.patch -- applied after build  (gsm_runs runtime changes)
+#         - gsm_runs/gsm          : PBS_O_WORKDIR guard (standalone execution)
+#         - gsm_runs/runscr/mpisub.in : hostfile Open MPI 5 format, prog path,
+#                                       mpirun flags (@MPIEXEC@ template)
+#         - gsm_runs/runscr/mpisub    : same, plus --allow-run-as-root,
+#                                       --map-by :OVERSUBSCRIBE,
+#                                       --mca btl_sm_backing_directory /tmp
+#                                       (workaround for 64 MB /dev/shm limit
+#                                        in container environments)
 #
 
 ISOGSM_DIR="${1:-/data/IsoGSM}"
