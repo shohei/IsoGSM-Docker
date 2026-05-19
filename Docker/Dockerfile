@@ -28,7 +28,7 @@ RUN curl -fsSL https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-P
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 python3-pip python3-dev \
-    cdo nco grads \
+    vim htop cvs cmake git \
     wget patch \
     build-essential gfortran \
     intel-oneapi-compiler-fortran=2023.* \
