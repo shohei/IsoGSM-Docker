@@ -126,7 +126,7 @@ When running on **WSL2 with the IsoGSM source on the Windows filesystem** (e.g. 
 
 | Patch file | Applied | What it fixes |
 |---|---|---|
-| `9pfs/isogsm_9pfs_src.patch` | Before GSM build | **`wrisig.F`**: adds an MPI rank guard (`if (wri_mype .ne. 0) return`) so only rank 0 writes sigma files, eliminating concurrent write corruption. **`gsm.F`**: adds explicit `mpinit`/`mpfine` calls to bracket the model run. |
+| `9pfs/isogsm_9pfs_src.patch` | Before GSM build | **`wrisig.F`**: inserts an `#ifdef MP` guard (with `integer npes,ncol,nrow,mype` / `common /commpi/` declarations and `if (mype .ne. 0) return`) so only MPI rank 0 writes sigma files, eliminating concurrent write corruption. **`gsm/src/fcst_par/Makefile.in`**: appends `-DMP` to the `CPP` flags so the preprocessor guard is active during the parallel build. |
 | `9pfs/isogsm_9pfs.patch` | After `configure-scr` | **`chgr`/`chgr.in`**: routes sigma file output through a `tmpfs` temporary file (`/tmp/chgr_*`), then copies back after the converter exits — ensuring writes land on a page-cached filesystem. **`mpisub`/`mpisub.in`**: copies the entire run directory to a `tmpfs` scratch directory (`/tmp/isogsm_*`), executes MPI there, then copies output files back to the original location. |
 
 These patches are **only applied on 9P filesystems** and are a no-op on native Linux or Docker-on-Linux environments.
@@ -151,3 +151,4 @@ Docker packaging and build automation by **Shohei Aoki** at Jomo Kenyatta Univer
 
 The Docker configuration files in this repository are provided under the [MIT License](LICENSE).  
 IsoGSM source code is subject to its own license — please refer to the IsoGSM distribution.
+ e
