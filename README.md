@@ -74,12 +74,15 @@ IsoGSM-Docker/
 ├── Docker/
 │   └── Dockerfile               # Ubuntu 22.04 + Intel oneAPI + OpenMPI
 ├── IsoGSM-patch/
-│   ├── build.sh                 # Build driver (detects environment, applies patches, compiles)
-│   ├── pbs/isogsm.patch         # Source patch — PBS present
-│   ├── nopbs/isogsm.patch       # Source patch — no PBS
-│   ├── smallshm/isogsm_run.patch  # Runtime patch — /dev/shm < 512 MB
-│   └── largeshm/isogsm_run.patch  # Runtime patch — /dev/shm ≥ 512 MB
-└── install.sh                   # One-liner installer entry point
+│   ├── build.sh                        # Build driver (detects environment, applies patches, compiles)
+│   ├── pbs/isogsm.patch                # Source patch — PBS present
+│   ├── nopbs/isogsm.patch              # Source patch — no PBS
+│   ├── smallshm/isogsm_run.patch       # Runtime patch — /dev/shm < 512 MB
+│   ├── largeshm/isogsm_run.patch       # Runtime patch — /dev/shm ≥ 512 MB
+│   └── 9pfs/
+│       ├── isogsm_9pfs_src.patch       # Fortran source patch for WSL2 DrvFs
+│       └── isogsm_9pfs.patch           # Runtime script patch for WSL2 DrvFs
+└── install.sh                          # One-liner installer entry point
 ```
 
 ---
@@ -111,6 +114,22 @@ PBS found │ pbs + smallshm      │ pbs + largeshm        │
 no PBS    │ nopbs + smallshm    │ nopbs + largeshm      │
           └─────────────────────┴──────────────────────┘
 ```
+
+### WSL2 DrvFs (9P filesystem) patches — applied when `/data/IsoGSM` is on a 9P filesystem
+
+When running on **WSL2 with the IsoGSM source on the Windows filesystem** (e.g. `C:\`), the bind-mounted volume uses the **DrvFs / 9P protocol** (`v9fs`). This filesystem lacks the Linux page cache, which causes two classes of failure:
+
+- **Fortran binary writes are dropped or truncated.** Large unformatted writes that fit in the page cache on a native Linux filesystem are silently lost on 9P because there is no write-back buffer.
+- **Concurrent MPI file access is unsafe.** File truncation by one process is immediately visible to all other MPI ranks, corrupting sigma files written during the forecast.
+
+`build.sh` detects this condition by checking `stat -f -c%T "$ISOGSM_DIR"`. If the result is `v9fs`, two additional patches are applied:
+
+| Patch file | Applied | What it fixes |
+|---|---|---|
+| `9pfs/isogsm_9pfs_src.patch` | Before GSM build | **`wrisig.F`**: adds an MPI rank guard (`if (wri_mype .ne. 0) return`) so only rank 0 writes sigma files, eliminating concurrent write corruption. **`gsm.F`**: adds explicit `mpinit`/`mpfine` calls to bracket the model run. |
+| `9pfs/isogsm_9pfs.patch` | After `configure-scr` | **`chgr`/`chgr.in`**: routes sigma file output through a `tmpfs` temporary file (`/tmp/chgr_*`), then copies back after the converter exits — ensuring writes land on a page-cached filesystem. **`mpisub`/`mpisub.in`**: copies the entire run directory to a `tmpfs` scratch directory (`/tmp/isogsm_*`), executes MPI there, then copies output files back to the original location. |
+
+These patches are **only applied on 9P filesystems** and are a no-op on native Linux or Docker-on-Linux environments.
 
 ---
 
