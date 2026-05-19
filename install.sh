@@ -49,3 +49,4 @@ echo "To access the container, use the following command:"
 echo docker exec -it isogsm /bin/bash
 echo "cd IsoGSM/gsm_runs && ./gsm"
 echo "****************************************************************"
+echo ""
