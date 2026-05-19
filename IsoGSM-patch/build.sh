@@ -54,10 +54,17 @@ fi
 
 # --- detect 9P (WSL2 DrvFs) filesystem ---
 #   On WSL2 with /data on the Windows C: drive (DrvFs), stat -f -c%T returns
-#   "v9fs".  DrvFs has no Linux page cache, so large sequential Fortran writes
-#   are dropped/truncated and concurrent file truncation is immediately visible
-#   to all MPI processes.  The 9pfs patch routes chgr and mpirun I/O through
-#   /tmp (tmpfs) where normal page-cache semantics are restored.
+#   "v9fs".  DrvFs causes two MPI-related problems that the 9pfs patches fix:
+#   (1) wrisig concurrent I/O: all MPI ranks call wrisig simultaneously; on
+#       v9fs a write-open from one rank immediately truncates the file seen by
+#       other ranks, causing forrtl error(24) EOF in setsig/wrisig.
+#       isogsm_9pfs_src.patch fixes this in two steps:
+#         - gsm/src/fcst/wrisig.F: adds "#ifdef MP" guard so only rank 0
+#           writes restart files (uses /commpi/ common block for mype).
+#         - gsm/src/fcst_par/Makefile.in: adds -DMP to CPP so the #ifdef
+#           guard is active when the MPI binary is compiled.
+#   (2) Large sequential I/O (chgr outputs, OpenMPI shared-memory backing) is
+#       unreliable on v9fs; isogsm_9pfs.patch routes those paths through /tmp.
 _fstype=$(stat -f -c%T "$ISOGSM_DIR" 2>/dev/null)
 FS_9P_PATCH_FILE=""
 FS_9P_SRC_PATCH_FILE=""
@@ -194,10 +201,10 @@ echo ""
 echo "=== build complete ==="
 echo ""
 echo "NOTE: IsoGSM initial conditions"
-echo "  fcst_t62k28_n128.x requires a 4-tracer sigma file (sigit/sigitdt)."
-echo "  The standard sigft*.asc has only 1 tracer; chgr converts it to"
-echo "  a 1-tracer binary.  On first run, place a pre-spun 4-tracer sigit"
-echo "  and sigitdt in the run directory (gsm_runs/g_000/) before running"
-echo "  ./gsm.  After a successful 72-h forecast completes, sigit is"
-echo "  automatically updated to the 4-tracer model output and subsequent"
-echo "  restarts work without intervention."
+echo "  The forecast binary (fcst_t62k28_n${NPES}.x) is compiled with 4"
+echo "  isotope tracers.  The standard sigft*.asc initial condition has only"
+echo "  1 tracer (water vapour); chgr converts it to a 1-tracer binary and"
+echo "  rdsig zero-initialises the 3 missing isotope fields automatically."
+echo "  No pre-spun 4-tracer file is needed for the first run.  After a"
+echo "  successful 72-h forecast, sigit is updated to the full 4-tracer"
+echo "  model output and subsequent restarts use the model-generated isotopes."
