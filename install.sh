@@ -23,13 +23,12 @@ if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
 fi
 
 #svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
-cd IsoGSM
 docker pull shohei/isogsm:latest
 docker container stop isogsm
 docker container rm isogsm
-docker run -i -v "`pwd`:/data/" --name isogsm shohei/isogsm:latest << 'EOF'
+docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest << 'EOF'
   set -e
-  cd IsoGSM
+  cd /data/IsoGSM
   wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/build.sh
   wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm.patch
   wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm_run.patch
@@ -40,6 +39,6 @@ docker run -i -v "`pwd`:/data/" --name isogsm shohei/isogsm:latest << 'EOF'
 EOF
 docker container start isogsm
 echo "IsoGSM installation complete." 
-echo "The next step is to run the container and execute the gsm_runs:"
+echo "The next step is to run the container and execute the script in gsm_runs."
 echo "cd IsoGSM/gsm_runs && ./gsm"
 docker exec -it isogsm /bin/bash
