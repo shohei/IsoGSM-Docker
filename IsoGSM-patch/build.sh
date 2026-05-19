@@ -11,59 +11,56 @@ set -e
 #
 #  ISOGSM_DIR : IsoGSM source root (default: /data/IsoGSM)
 #
-#  System profile is detected automatically from the runtime environment:
+#  Patch selection is determined independently by two runtime conditions:
 #
-#    ompi5 -- OpenMPI 5.x (PRRTE runtime) or /dev/shm < 512 MB
-#               isogsm.patch     : PBS_O_WORKDIR guard in roses/guns HEADER
-#               isogsm_run.patch : hostfile slots= format;
-#                                  OMPI_MCA_btl_sm_backing_directory=/tmp
-#                                  (prevents SIGBUS in Alltoallv when /dev/shm
-#                                  is at the 64 MB Docker default);
-#                                  --allow-run-as-root --map-by :OVERSUBSCRIBE
-#                                  (OpenMPI 5 PRRTE does not reliably honour
-#                                  slots=N in the hostfile)
+#    isogsm.patch     -- selected by PBS presence
+#      pbs/   : PBS (qsub) detected; adds PBS_O_WORKDIR guard in roses/guns
+#               HEADER so the generated run scripts work both inside and
+#               outside a PBS job
+#      nopbs/ : no PBS; omits the guard (PBS_O_WORKDIR is never set)
 #
-#    ompi4 -- OpenMPI 4.x or earlier (default)
-#               isogsm_run.patch : standard @MPIEXEC@ template with
-#                                  -hostfile / -wdir options only
+#    isogsm_run.patch -- selected by /dev/shm size
+#      smallshm/ : /dev/shm < 512 MB (Docker default 64 MB on many HPC nodes);
+#                  redirects OpenMPI shared-memory segments to /tmp via
+#                  OMPI_MCA_btl_sm_backing_directory to prevent SIGBUS in
+#                  Alltoallv; also applies hostfile slots= format and
+#                  --allow-run-as-root --map-by :OVERSUBSCRIBE
+#      largeshm/ : /dev/shm >= 512 MB; standard @MPIEXEC@ template with
+#                  -hostfile / -wdir options only
 #
 #  Patch application order:
-#    1. <profile>/isogsm.patch     -- applied before build
-#    2. configure-scr              -- generates gsm_runs run scripts
-#    3. <profile>/isogsm_run.patch -- applied after configure-scr
+#    1. isogsm.patch     -- applied before build
+#    2. configure-scr    -- generates gsm_runs run scripts
+#    3. isogsm_run.patch -- applied after configure-scr
 #
 
 ISOGSM_DIR="${1:-/data/IsoGSM}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# --- detect system profile ---
-detect_profile() {
-    local ompi_major
-    ompi_major=$(mpirun --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 | cut -d. -f1)
-    if [ -n "$ompi_major" ] && [ "$ompi_major" -ge 5 ]; then
-        echo "ompi5"
-        return
-    fi
+# --- select isogsm.patch: PBS presence ---
+if command -v qsub &>/dev/null; then
+    PATCH_PROFILE="pbs"
+else
+    PATCH_PROFILE="nopbs"
+fi
 
-    local shm_kb
-    shm_kb=$(df /dev/shm 2>/dev/null | awk 'NR==2{print $2}')
-    if [ -n "$shm_kb" ] && [ "$shm_kb" -lt 524288 ]; then
-        echo "ompi5"
-        return
-    fi
+# --- select isogsm_run.patch: /dev/shm size ---
+_shm_kb=$(df /dev/shm 2>/dev/null | awk 'NR==2{print $2}')
+if [ -n "$_shm_kb" ] && [ "$_shm_kb" -lt 524288 ]; then
+    RUN_PATCH_PROFILE="smallshm"
+else
+    RUN_PATCH_PROFILE="largeshm"
+fi
 
-    echo "ompi4"
-}
-
-PROFILE=$(detect_profile)
-PATCH_FILE="$SCRIPT_DIR/$PROFILE/isogsm.patch"
-RUN_PATCH_FILE="$SCRIPT_DIR/$PROFILE/isogsm_run.patch"
+PATCH_FILE="$SCRIPT_DIR/$PATCH_PROFILE/isogsm.patch"
+RUN_PATCH_FILE="$SCRIPT_DIR/$RUN_PATCH_PROFILE/isogsm_run.patch"
 
 echo "=== IsoGSM build ==="
-echo "ISOGSM_DIR    : $ISOGSM_DIR"
-echo "PROFILE       : $PROFILE"
-echo "PATCH_FILE    : $PATCH_FILE"
-echo "RUN_PATCH_FILE: $RUN_PATCH_FILE"
+echo "ISOGSM_DIR      : $ISOGSM_DIR"
+echo "PATCH_PROFILE   : $PATCH_PROFILE  (isogsm.patch)"
+echo "RUN_PATCH_PROFILE: $RUN_PATCH_PROFILE  (isogsm_run.patch)"
+echo "PATCH_FILE      : $PATCH_FILE"
+echo "RUN_PATCH_FILE  : $RUN_PATCH_FILE"
 
 # --- sanity checks ---
 if [ ! -d "$ISOGSM_DIR" ]; then

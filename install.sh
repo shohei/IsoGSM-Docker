@@ -39,11 +39,11 @@ docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest 
   cd /data/IsoGSM
   BASE_URL=https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch
   wget -O build.sh "$BASE_URL/build.sh"
-  mkdir -p ompi5 ompi4
-  wget -O ompi5/isogsm.patch     "$BASE_URL/ompi5/isogsm.patch"
-  wget -O ompi5/isogsm_run.patch "$BASE_URL/ompi5/isogsm_run.patch"
-  wget -O ompi4/isogsm.patch     "$BASE_URL/ompi4/isogsm.patch"
-  wget -O ompi4/isogsm_run.patch "$BASE_URL/ompi4/isogsm_run.patch"
+  mkdir -p pbs nopbs smallshm largeshm
+  wget -O pbs/isogsm.patch          "$BASE_URL/pbs/isogsm.patch"
+  wget -O nopbs/isogsm.patch        "$BASE_URL/nopbs/isogsm.patch"
+  wget -O smallshm/isogsm_run.patch "$BASE_URL/smallshm/isogsm_run.patch"
+  wget -O largeshm/isogsm_run.patch "$BASE_URL/largeshm/isogsm_run.patch"
   chmod a+x build.sh
   ./build.sh
 EOF
