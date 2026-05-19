@@ -154,7 +154,13 @@ make
 if [ -n "$FS_9P_SRC_PATCH_FILE" ]; then
     echo ""
     echo "--- applying 9P source patch (isogsm_9pfs_src.patch) ---"
-    apply_patch "$FS_9P_SRC_PATCH_FILE" "isogsm_9pfs_src.patch"
+    _wrisig="$ISOGSM_DIR/gsm/src/fcst/wrisig.F"
+    _mkfile="$ISOGSM_DIR/gsm/src/fcst_par/Makefile.in"
+    if grep -q 'iorog_read' "$_wrisig" && grep -q '\-DMP' "$_mkfile"; then
+        echo "isogsm_9pfs_src.patch already applied, skipping."
+    else
+        apply_patch "$FS_9P_SRC_PATCH_FILE" "isogsm_9pfs_src.patch"
+    fi
 fi
 
 # --- configure and build GSM ---
