@@ -48,6 +48,8 @@ docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest 
   wget -O 9pfs/isogsm_9pfs_src.patch "$BASE_URL/9pfs/isogsm_9pfs_src.patch"
   chmod a+x build.sh
   ./build.sh
+  rm -rf pbs nopbs smallshm largeshm 9pfs
+  rm -rf build.sh
 EOF
 docker container start isogsm
 echo "****************************************************************"
