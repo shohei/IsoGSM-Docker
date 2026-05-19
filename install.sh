@@ -22,7 +22,7 @@ if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
     sudo apt-get install -y "${MISSING_PKGS[@]}"
 fi
 
-svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
+#svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
 cd IsoGSM
 docker pull shohei/isogsm:latest
 docker container stop isogsm
