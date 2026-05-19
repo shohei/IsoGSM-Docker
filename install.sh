@@ -37,9 +37,9 @@ docker container rm isogsm
 docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest << 'EOF'
   set -e
   cd /data/IsoGSM
-  wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/build.sh
-  wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm.patch
-  wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm_run.patch
+  wget -O build.sh https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/build.sh
+  wget -O isogsm.patch https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm.patch
+  wget -O isogsm_run.patch https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm_run.patch
   chmod a+x build.sh
   ./build.sh
   cd gsm_runs

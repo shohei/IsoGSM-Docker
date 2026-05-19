@@ -19,7 +19,6 @@ set -e
 #                                   roses/guns HEADER
 #         - gsm/configure-model   : set LIBS_DIR, NPES=$(nproc), NCOL auto
 #    2. isogsm_run.patch -- applied after build  (gsm_runs runtime changes)
-#         - gsm_runs/gsm          : PBS_O_WORKDIR guard (standalone execution)
 #         - gsm_runs/runscr/mpisub.in : hostfile Open MPI 5 format, prog path,
 #                                       mpirun flags (@MPIEXEC@ template)
 #         - gsm_runs/runscr/mpisub    : same, plus --allow-run-as-root,
@@ -111,6 +110,12 @@ echo ""
 echo "--- building GSM ---"
 make clean
 make
+
+# --- configure gsm_runs (generates gsm_runs/gsm from expscr template) ---
+echo ""
+echo "--- configuring gsm_runs (generating run scripts) ---"
+cd "$ISOGSM_DIR/gsm_runs"
+NOASK=on ./configure-scr gsm
 
 # --- apply runtime patch ---
 echo ""
