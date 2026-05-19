@@ -15,7 +15,6 @@ This repository provides a ready-to-use Docker setup for IsoGSM, a global atmosp
 | Base OS | Ubuntu 22.04 |
 | Fortran compiler | Intel oneAPI ifort 2023.x |
 | MPI | OpenMPI 5.0.10 |
-| GRIB2 tool | wgrib2 v3.1.3 |
 | Visualization | GrADS |
 | Data tools | CDO, NCO |
 | Python stack | NumPy, Pandas, xarray, netCDF4, SciPy, Matplotlib |
@@ -76,7 +75,7 @@ docker exec -it isogsm_container /bin/bash
 ```
 IsoGSM-Docker/
 ├── Docker/
-│   └── Dockerfile          # Ubuntu 22.04 + Intel oneAPI + OpenMPI + wgrib2
+│   └── Dockerfile          # Ubuntu 22.04 + Intel oneAPI + OpenMPI 
 ├── IsoGSM-patch/
 │   ├── build.sh            # Build driver (applies patches, runs configure & make)
 │   ├── isogsm.patch        # Source-level patch applied before build
