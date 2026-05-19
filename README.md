@@ -55,14 +55,14 @@ This script will:
 After the initial setup, use the following command to re-attach to the running container:
 
 ```bash
-docker exec -it isogsm_container /bin/bash
+docker exec -it isogsm /bin/bash
 ```
 
 > [!NOTE]
 > `docker exec` only works while the container is **running**. If the container has been stopped (e.g. after a reboot), start it first:
 > ```bash
-> docker start isogsm_container
-> docker exec -it isogsm_container /bin/bash
+> docker start isogsm
+> docker exec -it isogsm /bin/bash
 > ```
 
 ---
