@@ -1,35 +1,12 @@
 --- a/gsm/src/fcst/wrisig.F
 +++ b/gsm/src/fcst/wrisig.F
-@@ -155,6 +155,9 @@
+@@ -119,6 +119,9 @@
        data fni/'sig','sigp','sigi','sigit','sigitdt'/
        data nchi/3,4,4,5,7/
        character*128 fno
-+      integer wricpi(3), wri_mype
-+      common /commpi/ wricpi, wri_mype
-+      if (wri_mype .ne. 0) return
++#ifdef MP
++      if (mype .ne. 0) return
++#endif
+ 
+ #ifdef NISLQ
        if (itpdt .eq. 1 .or. itpdt .eq. 4 ) then
-         call sph_fft_driver(1,slq_q1,rq,ntotal_)
-       else if (itpdt.eq.2 .or. itpdt.eq.5) then
---- a/gsm/src/fcst/gsm.F
-+++ b/gsm/src/fcst/gsm.F
-@@ -303,10 +303,12 @@
-       real strwtime
- c
- c
- c
- c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
- c
-+      call mpinit(strwtime)
-+c
- c initial call to global spectral model for getcon etc.
- c
-       call gsmini
- c
-@@ -327,6 +329,7 @@
- c  end  time  loop
- c
-       call gsmend
-+      call mpfine(strwtime)
- c
-       stop
-       end
