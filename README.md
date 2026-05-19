@@ -15,9 +15,6 @@ This repository provides a ready-to-use Docker setup for IsoGSM, a global atmosp
 | Base OS | Ubuntu 22.04 |
 | Fortran compiler | Intel oneAPI ifort 2023.x |
 | MPI | OpenMPI 5.0.10 |
-| Visualization | GrADS |
-| Data tools | CDO, NCO |
-| Python stack | NumPy, Pandas, xarray, netCDF4, SciPy, Matplotlib |
 
 ---
 
