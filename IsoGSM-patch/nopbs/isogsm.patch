@@ -12,12 +12,12 @@
 --- a/def/sysvars.defs
 +++ b/def/sysvars.defs
 @@ -38,7 +38,7 @@
- #  is ibm machine at ncar and uses ibmsp compiler, and therefore, it is not
+ #  is ibm machine at ncar and uses ibmsp compiler, and therefore, it is not 
  #  necessary to specify MACHINE, COMPILER.
  #
 -GRSM_BASE_DIR=/rhome/yeong/test/svrtest
 +GRSM_BASE_DIR=/data/IsoGSM
- #
+ #    
  AVAILABLE_MODELS_LIST="gsm rsm crsm nhm roms scm gdas cpl"
  #
 @@ -166,7 +166,7 @@
