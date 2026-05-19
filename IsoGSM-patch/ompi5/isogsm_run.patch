@@ -1,0 +1,58 @@
+--- a/gsm_runs/runscr/mpisub.in
++++ b/gsm_runs/runscr/mpisub.in
+@@ -27,7 +27,7 @@
+ x=`expr $TOTAL_NPES + @NCPU_PER_NODE@ \- 1`
+ n=`expr $x \/ @NCPU_PER_NODE@ + 1`
+ #
+-sed -n "1,${TOTAL_NPES}p" @NODE_LIST@ >$here_dir/hostfile
++sed -n "1,${TOTAL_NPES}p" @NODE_LIST@ | sort | uniq -c | awk '{print $2" slots="$1}' >$here_dir/hostfile
+ #
+ which mpdboot 2>/dev/null
+ cc=$?
+@@ -68,7 +68,7 @@
+ if [ @NICKNAME@ = naam ] ; then
+ 	args="$args $colon $prog $parm"
+ else
+-	args="$args $colon @NPES_ARG@ $npes $prog $parm"
++	args="$args $colon @NPES_ARG@ $npes $here_dir/$prog $parm"
+ fi
+ 	#
+ 	# remove .* from $prog for beautification
+@@ -82,7 +82,7 @@
+ # remove .x from outs
+ #
+ echo $args
+-@MPIEXEC@  @MPIEXEC_ARGS@ $args 1>$here_dir/$outs.ft$hx 2>&1
++OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
+ cc=$?
+ #
+ ./mpdexit.sh
+--- a/gsm_runs/runscr/mpisub
++++ b/gsm_runs/runscr/mpisub
+@@ -27,7 +27,7 @@
+ x=`expr $TOTAL_NPES + 1 \- 1`
+ n=`expr $x \/ 1 + 1`
+ #
+-sed -n "1,${TOTAL_NPES}p" $HOME/node_list >$here_dir/hostfile
++sed -n "1,${TOTAL_NPES}p" $HOME/node_list | sort | uniq -c | awk '{print $2" slots="$1}' >$here_dir/hostfile
+ #
+ which mpdboot 2>/dev/null
+ cc=$?
+@@ -68,7 +68,7 @@
+ if [ roses = naam ] ; then
+ 	args="$args $colon $prog $parm"
+ else
+-	args="$args $colon -np $npes $prog $parm"
++	args="$args $colon -np $npes $here_dir/$prog $parm"
+ fi
+ 	#
+ 	# remove .* from $prog for beautification
+@@ -82,7 +82,7 @@
+ # remove .x from outs
+ #
+ echo $args
+-mpirun  -hostfile $PBS_NODEFILE $args 1>$here_dir/$outs.ft$hx 2>&1
++OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
+ cc=$?
+ #
+ ./mpdexit.sh

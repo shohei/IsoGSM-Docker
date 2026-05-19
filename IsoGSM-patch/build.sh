@@ -11,41 +11,57 @@ set -e
 #
 #  ISOGSM_DIR : IsoGSM source root (default: /data/IsoGSM)
 #
+#  System profile is detected automatically from the runtime environment:
+#
+#    ompi5 -- OpenMPI 5.x (PRRTE runtime) or /dev/shm < 512 MB
+#               isogsm.patch     : PBS_O_WORKDIR guard in roses/guns HEADER
+#               isogsm_run.patch : hostfile slots= format;
+#                                  OMPI_MCA_btl_sm_backing_directory=/tmp
+#                                  (prevents SIGBUS in Alltoallv when /dev/shm
+#                                  is at the 64 MB Docker default);
+#                                  --allow-run-as-root --map-by :OVERSUBSCRIBE
+#                                  (OpenMPI 5 PRRTE does not reliably honour
+#                                  slots=N in the hostfile)
+#
+#    ompi4 -- OpenMPI 4.x or earlier (default)
+#               isogsm_run.patch : standard @MPIEXEC@ template with
+#                                  -hostfile / -wdir options only
+#
 #  Patch application order:
-#    1. isogsm.patch     -- applied before build (source/config changes)
-#         - def/get_scrvars       : fix relative path for scrvars sourcing
-#         - def/sysvars.defs      : set GRSM_BASE_DIR, MPICH_DIR (Open MPI),
-#                                   MPI compiler/flags, PBS_O_WORKDIR guard in
-#                                   roses/guns HEADER
-#         - gsm/configure-model   : set LIBS_DIR, NPES=$(nproc), NCOL auto
-#    2. isogsm_run.patch -- applied after build  (gsm_runs runtime changes)
-#         - gsm_runs/runscr/mpisub.in : hostfile slots= format, prog full path,
-#                                       hardcoded OpenMPI command replacing
-#                                       @MPIEXEC@ @MPIEXEC_ARGS@ template
-#         - gsm_runs/runscr/mpisub    : same; full command is:
-#                                         OMPI_MCA_btl_sm_backing_directory=/tmp
-#                                         /usr/local/openmpi/bin/mpirun
-#                                         --allow-run-as-root
-#                                         --map-by :OVERSUBSCRIBE
-#                                       OMPI_MCA_btl_sm_backing_directory=/tmp
-#                                       redirects OpenMPI shared-memory segments
-#                                       from /dev/shm (64 MB Docker default) to
-#                                       /tmp, preventing SIGBUS in Alltoallv.
-#                                       --allow-run-as-root is required when
-#                                       running as root (typical in containers).
-#                                       --map-by :OVERSUBSCRIBE is required
-#                                       because OpenMPI 5 PRRTE does not reliably
-#                                       honour slots=N in the hostfile on this
-#                                       system.
+#    1. <profile>/isogsm.patch     -- applied before build
+#    2. configure-scr              -- generates gsm_runs run scripts
+#    3. <profile>/isogsm_run.patch -- applied after configure-scr
 #
 
 ISOGSM_DIR="${1:-/data/IsoGSM}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PATCH_FILE="$SCRIPT_DIR/isogsm.patch"
-RUN_PATCH_FILE="$SCRIPT_DIR/isogsm_run.patch"
+
+# --- detect system profile ---
+detect_profile() {
+    local ompi_major
+    ompi_major=$(mpirun --version 2>&1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 | cut -d. -f1)
+    if [ -n "$ompi_major" ] && [ "$ompi_major" -ge 5 ]; then
+        echo "ompi5"
+        return
+    fi
+
+    local shm_kb
+    shm_kb=$(df /dev/shm 2>/dev/null | awk 'NR==2{print $2}')
+    if [ -n "$shm_kb" ] && [ "$shm_kb" -lt 524288 ]; then
+        echo "ompi5"
+        return
+    fi
+
+    echo "ompi4"
+}
+
+PROFILE=$(detect_profile)
+PATCH_FILE="$SCRIPT_DIR/$PROFILE/isogsm.patch"
+RUN_PATCH_FILE="$SCRIPT_DIR/$PROFILE/isogsm_run.patch"
 
 echo "=== IsoGSM build ==="
 echo "ISOGSM_DIR    : $ISOGSM_DIR"
+echo "PROFILE       : $PROFILE"
 echo "PATCH_FILE    : $PATCH_FILE"
 echo "RUN_PATCH_FILE: $RUN_PATCH_FILE"
 

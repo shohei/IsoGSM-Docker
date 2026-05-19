@@ -37,13 +37,15 @@ docker container rm isogsm
 docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest << 'EOF'
   set -e
   cd /data/IsoGSM
-  wget -O build.sh https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/build.sh
-  wget -O isogsm.patch https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm.patch
-  wget -O isogsm_run.patch https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/isogsm_run.patch
+  BASE_URL=https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch
+  wget -O build.sh "$BASE_URL/build.sh"
+  mkdir -p ompi5 ompi4
+  wget -O ompi5/isogsm.patch     "$BASE_URL/ompi5/isogsm.patch"
+  wget -O ompi5/isogsm_run.patch "$BASE_URL/ompi5/isogsm_run.patch"
+  wget -O ompi4/isogsm.patch     "$BASE_URL/ompi4/isogsm.patch"
+  wget -O ompi4/isogsm_run.patch "$BASE_URL/ompi4/isogsm_run.patch"
   chmod a+x build.sh
   ./build.sh
-  cd gsm_runs
-  ./configure-scr gsm
 EOF
 docker container start isogsm
 echo "****************************************************************"
