@@ -59,10 +59,12 @@ fi
 #       v9fs a write-open from one rank immediately truncates the file seen by
 #       other ranks, causing forrtl error(24) EOF in setsig/wrisig.
 #       isogsm_9pfs_src.patch fixes this in two steps:
-#         - gsm/src/fcst/wrisig.F: adds "#ifdef MP" guard so only rank 0
-#           writes restart files (uses /commpi/ common block for mype).
-#         - gsm/src/fcst_par/Makefile.in: adds -DMP to CPP so the #ifdef
-#           guard is active when the MPI binary is compiled.
+#         - gsm/src/fcst/wrisig.F: adds rank-0-only guard (if mype.ne.0 return)
+#           and caches the orog array (iorog_read) so sigit is read only once,
+#           preventing the itpdt=4 write from truncating sigit before the
+#           itpdt=5 call reads it for topography.
+#         - gsm/src/fcst_par/Makefile.in: adds -DMP to CPP (activates the
+#           /commpi/ common block that exposes mype to wrisig).
 #   (2) Large sequential I/O (chgr outputs, OpenMPI shared-memory backing) is
 #       unreliable on v9fs; isogsm_9pfs.patch routes those paths through /tmp.
 _fstype=$(stat -f -c%T "$ISOGSM_DIR" 2>/dev/null)
