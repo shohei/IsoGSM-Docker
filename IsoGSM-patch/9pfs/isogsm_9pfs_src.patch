@@ -1,6 +1,6 @@
 --- a/gsm/src/fcst/wrisig.F
 +++ b/gsm/src/fcst/wrisig.F
-@@ -104,4 +104,7 @@
+@@ -104,6 +104,9 @@
        dimension ak5x(levp1_),bk5x(levp1_)
  c
        dimension orog(lnt22_)
@@ -8,15 +8,16 @@
 +      save orog, iorog_read
 +      data iorog_read/0/
  c
-@@ -135,7 +138,8 @@
- c
- c  get topography from history file
- c
+ #ifndef HYBRID      
+       parameter(kdum=201-levs_-1-levs_,kdum2=21,kens=2)
+@@ -138,6 +141,7 @@
  #ifdef MP
        if( mype.eq.master ) then
  #endif
 +      if (iorog_read .eq. 0) then
        close(n)
+       rewind n
+       open(unit=n,file='./sigit',form='unformatted',err=700)
 @@ -168,6 +172,8 @@
        print *,' read gz '
  #endif
