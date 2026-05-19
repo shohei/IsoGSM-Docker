@@ -19,13 +19,24 @@ set -e
 #                                   roses/guns HEADER
 #         - gsm/configure-model   : set LIBS_DIR, NPES=$(nproc), NCOL auto
 #    2. isogsm_run.patch -- applied after build  (gsm_runs runtime changes)
-#         - gsm_runs/runscr/mpisub.in : hostfile Open MPI 5 format, prog path,
-#                                       mpirun flags (@MPIEXEC@ template)
-#         - gsm_runs/runscr/mpisub    : same, plus --allow-run-as-root,
-#                                       --map-by :OVERSUBSCRIBE,
-#                                       --mca btl_sm_backing_directory /tmp
-#                                       (workaround for 64 MB /dev/shm limit
-#                                        in container environments)
+#         - gsm_runs/runscr/mpisub.in : hostfile slots= format, prog full path,
+#                                       hardcoded OpenMPI command replacing
+#                                       @MPIEXEC@ @MPIEXEC_ARGS@ template
+#         - gsm_runs/runscr/mpisub    : same; full command is:
+#                                         OMPI_MCA_btl_sm_backing_directory=/tmp
+#                                         /usr/local/openmpi/bin/mpirun
+#                                         --allow-run-as-root
+#                                         --map-by :OVERSUBSCRIBE
+#                                       OMPI_MCA_btl_sm_backing_directory=/tmp
+#                                       redirects OpenMPI shared-memory segments
+#                                       from /dev/shm (64 MB Docker default) to
+#                                       /tmp, preventing SIGBUS in Alltoallv.
+#                                       --allow-run-as-root is required when
+#                                       running as root (typical in containers).
+#                                       --map-by :OVERSUBSCRIBE is required
+#                                       because OpenMPI 5 PRRTE does not reliably
+#                                       honour slots=N in the hostfile on this
+#                                       system.
 #
 
 ISOGSM_DIR="${1:-/data/IsoGSM}"
@@ -131,3 +142,12 @@ echo "node_list created at $HOME/node_list ($NPES localhost entries)."
 
 echo ""
 echo "=== build complete ==="
+echo ""
+echo "NOTE: IsoGSM initial conditions"
+echo "  fcst_t62k28_n128.x requires a 4-tracer sigma file (sigit/sigitdt)."
+echo "  The standard sigft*.asc has only 1 tracer; chgr converts it to"
+echo "  a 1-tracer binary.  On first run, place a pre-spun 4-tracer sigit"
+echo "  and sigitdt in the run directory (gsm_runs/g_000/) before running"
+echo "  ./gsm.  After a successful 72-h forecast completes, sigit is"
+echo "  automatically updated to the 4-tracer model output and subsequent"
+echo "  restarts work without intervention."

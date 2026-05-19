@@ -23,7 +23,7 @@
  #
  echo $args
 -@MPIEXEC@  @MPIEXEC_ARGS@ $args 1>$here_dir/$outs.ft$hx 2>&1
-+@MPIEXEC@  -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
++OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
  cc=$?
  #
  ./mpdexit.sh
@@ -52,7 +52,7 @@
  #
  echo $args
 -mpirun  -hostfile $PBS_NODEFILE $args 1>$here_dir/$outs.ft$hx 2>&1
-+mpirun -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
++OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
  cc=$?
  #
  ./mpdexit.sh
