@@ -80,14 +80,14 @@ apply_patch() {
     local pfile="$1"
     local label="$2"
     cd "$ISOGSM_DIR"
-    if patch -p1 --dry-run < "$pfile" > /dev/null 2>&1; then
-        patch -p1 < "$pfile"
+    if patch -p1 -l --dry-run < "$pfile" > /dev/null 2>&1; then
+        patch -p1 -l < "$pfile"
         echo "$label applied successfully."
-    elif patch -p1 --dry-run -R < "$pfile" > /dev/null 2>&1; then
+    elif patch -p1 -l --dry-run -R < "$pfile" > /dev/null 2>&1; then
         echo "$label already applied, skipping."
     else
         echo "ERROR: $label failed. Please check the source tree."
-        patch -p1 --dry-run < "$pfile"
+        patch -p1 -l --dry-run < "$pfile"
         exit 1
     fi
 }
