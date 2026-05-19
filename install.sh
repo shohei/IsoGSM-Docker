@@ -22,7 +22,11 @@ if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
     sudo apt-get install -y "${MISSING_PKGS[@]}"
 fi
 
-#svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
+if [ ! -d "IsoGSM" ]; then
+    svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
+else
+    echo "IsoGSM directory already exists, skipping checkout."
+fi
 docker pull shohei/isogsm:latest
 docker container stop isogsm
 docker container rm isogsm
