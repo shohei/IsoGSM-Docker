@@ -52,6 +52,20 @@ else
     RUN_PATCH_PROFILE="largeshm"
 fi
 
+# --- detect 9P (WSL2 DrvFs) filesystem ---
+#   On WSL2 with /data on the Windows C: drive (DrvFs), stat -f -c%T returns
+#   "v9fs".  DrvFs has no Linux page cache, so large sequential Fortran writes
+#   are dropped/truncated and concurrent file truncation is immediately visible
+#   to all MPI processes.  The 9pfs patch routes chgr and mpirun I/O through
+#   /tmp (tmpfs) where normal page-cache semantics are restored.
+_fstype=$(stat -f -c%T "$ISOGSM_DIR" 2>/dev/null)
+FS_9P_PATCH_FILE=""
+FS_9P_SRC_PATCH_FILE=""
+if [ "$_fstype" = "v9fs" ]; then
+    FS_9P_PATCH_FILE="$SCRIPT_DIR/9pfs/isogsm_9pfs.patch"
+    FS_9P_SRC_PATCH_FILE="$SCRIPT_DIR/9pfs/isogsm_9pfs_src.patch"
+fi
+
 PATCH_FILE="$SCRIPT_DIR/$PATCH_PROFILE/isogsm.patch"
 RUN_PATCH_FILE="$SCRIPT_DIR/$RUN_PATCH_PROFILE/isogsm_run.patch"
 
@@ -59,8 +73,13 @@ echo "=== IsoGSM build ==="
 echo "ISOGSM_DIR      : $ISOGSM_DIR"
 echo "PATCH_PROFILE   : $PATCH_PROFILE  (isogsm.patch)"
 echo "RUN_PATCH_PROFILE: $RUN_PATCH_PROFILE  (isogsm_run.patch)"
+echo "FS_TYPE         : ${_fstype:-unknown}"
 echo "PATCH_FILE      : $PATCH_FILE"
 echo "RUN_PATCH_FILE  : $RUN_PATCH_FILE"
+if [ -n "$FS_9P_PATCH_FILE" ]; then
+    echo "9P_PATCH_FILE   : $FS_9P_PATCH_FILE"
+    echo "9P_SRC_PATCH_FILE: $FS_9P_SRC_PATCH_FILE"
+fi
 
 # --- sanity checks ---
 if [ ! -d "$ISOGSM_DIR" ]; then
@@ -122,6 +141,13 @@ echo "--- building LIBS ---"
 make clean
 make
 
+# --- apply 9P source patch before GSM build (WSL2 DrvFs only) ---
+if [ -n "$FS_9P_SRC_PATCH_FILE" ]; then
+    echo ""
+    echo "--- applying 9P source patch (isogsm_9pfs_src.patch) ---"
+    apply_patch "$FS_9P_SRC_PATCH_FILE" "isogsm_9pfs_src.patch"
+fi
+
 # --- configure and build GSM ---
 echo ""
 echo "--- configuring GSM ---"
@@ -145,6 +171,17 @@ NOASK=on ./configure-scr gsm
 echo ""
 echo "--- applying runtime patch (isogsm_run.patch) ---"
 apply_patch "$RUN_PATCH_FILE" "isogsm_run.patch"
+
+# --- apply 9P filesystem patch (WSL2 DrvFs only) ---
+if [ -n "$FS_9P_PATCH_FILE" ]; then
+    echo ""
+    echo "--- applying 9P filesystem patch (isogsm_9pfs.patch) ---"
+    if [ ! -f "$FS_9P_PATCH_FILE" ]; then
+        echo "ERROR: 9P patch file not found: $FS_9P_PATCH_FILE"
+        exit 1
+    fi
+    apply_patch "$FS_9P_PATCH_FILE" "isogsm_9pfs.patch"
+fi
 
 # --- create $HOME/node_list for standalone MPI execution ---
 echo ""

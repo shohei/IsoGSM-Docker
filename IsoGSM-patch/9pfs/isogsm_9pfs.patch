@@ -1,0 +1,164 @@
+--- a/gsm_runs/runscr/chgr.in
++++ b/gsm_runs/runscr/chgr.in
+@@ -32,8 +32,17 @@
+ ln -fs $in_sfc          @FTNID@14
+ ln -fs $fnsporog        @FTNID@12
+ ln -fs @MODEL_DIR@/bin/slmsk  @FTNID@13
+-ln -fs $out_sig         @FTNID@51
+-ln -fs $out_sfc         @FTNID@52
++_chgr_sig_tmp=""
++_chgr_sfc_tmp=""
++if stat -f -c%T "$(dirname "$out_sig")" 2>/dev/null | grep -qx v9fs; then
++	_chgr_sig_tmp=$(mktemp /tmp/chgr_sig_XXXXXX)
++	_chgr_sfc_tmp=$(mktemp /tmp/chgr_sfc_XXXXXX)
++	ln -fs "$_chgr_sig_tmp" @FTNID@51
++	ln -fs "$_chgr_sfc_tmp" @FTNID@52
++else
++	ln -fs $out_sig         @FTNID@51
++	ln -fs $out_sfc         @FTNID@52
++fi
+ #
+ cat >$PROG.parm <<EOF
+  &NAMCHGR
+@@ -44,13 +53,17 @@
+ rm -f $PROG.x
+ ln -fs @MODEL_DIR@/bin/${PROG}.x $PROG.x
+ ./$PROG.x <$PROG.parm 1>$PROG.out 2>&1
+ if [ $? -ne 0 ] ; then
+ 	echo "`date` $0: execution failed." >>ERROR.out
++	rm -f "$_chgr_sig_tmp" "$_chgr_sfc_tmp"
+   exit 8
+ fi
++if [ -n "$_chgr_sig_tmp" ]; then cp "$_chgr_sig_tmp" "$out_sig" && rm -f "$_chgr_sig_tmp" || exit 8; fi
+ if [ ! -s $in_sfc ] ; then
+-	rm $out_sfc
++	rm -f "$_chgr_sfc_tmp" $out_sfc
++else
++	if [ -n "$_chgr_sfc_tmp" ]; then cp "$_chgr_sfc_tmp" "$out_sfc"; rm -f "$_chgr_sfc_tmp"; fi
+ fi
+ #
+ rm -f @FTNID@[0-9]*
+ exit 0
+--- a/gsm_runs/runscr/chgr
++++ b/gsm_runs/runscr/chgr
+@@ -32,8 +32,17 @@
+ ln -fs $in_sfc          fort.14
+ ln -fs $fnsporog        fort.12
+ ln -fs /data/IsoGSM/gsm/bin/slmsk  fort.13
+-ln -fs $out_sig         fort.51
+-ln -fs $out_sfc         fort.52
++_chgr_sig_tmp=""
++_chgr_sfc_tmp=""
++if stat -f -c%T "$(dirname "$out_sig")" 2>/dev/null | grep -qx v9fs; then
++	_chgr_sig_tmp=$(mktemp /tmp/chgr_sig_XXXXXX)
++	_chgr_sfc_tmp=$(mktemp /tmp/chgr_sfc_XXXXXX)
++	ln -fs "$_chgr_sig_tmp" fort.51
++	ln -fs "$_chgr_sfc_tmp" fort.52
++else
++	ln -fs $out_sig         fort.51
++	ln -fs $out_sfc         fort.52
++fi
+ #
+ cat >$PROG.parm <<EOF
+  &NAMCHGR
+@@ -44,13 +53,17 @@
+ rm -f $PROG.x
+ ln -fs /data/IsoGSM/gsm/bin/${PROG}.x $PROG.x
+ ./$PROG.x <$PROG.parm 1>$PROG.out 2>&1
+ if [ $? -ne 0 ] ; then
+ 	echo "`date` $0: execution failed." >>ERROR.out
++	rm -f "$_chgr_sig_tmp" "$_chgr_sfc_tmp"
+   exit 8
+ fi
++if [ -n "$_chgr_sig_tmp" ]; then cp "$_chgr_sig_tmp" "$out_sig" && rm -f "$_chgr_sig_tmp" || exit 8; fi
+ if [ ! -s $in_sfc ] ; then
+-	rm $out_sfc
++	rm -f "$_chgr_sfc_tmp" $out_sfc
++else
++	if [ -n "$_chgr_sfc_tmp" ]; then cp "$_chgr_sfc_tmp" "$out_sfc"; rm -f "$_chgr_sfc_tmp"; fi
+ fi
+ #
+ rm -f fort.[0-9]*
+ exit 0
+--- a/gsm_runs/runscr/mpisub.in
++++ b/gsm_runs/runscr/mpisub.in
+@@ -28,6 +28,11 @@
+ n=`expr $x \/ @NCPU_PER_NODE@ + 1`
+ #
+ sed -n "1,${TOTAL_NPES}p" @NODE_LIST@ | sort | uniq -c | awk '{print $2" slots="$1}' >$here_dir/hostfile
++run_dir="$here_dir"
++if stat -f -c%T "$here_dir" 2>/dev/null | grep -qx v9fs; then
++	run_dir=$(mktemp -d /tmp/isogsm_XXXXXX)
++	cp -a "$here_dir/." "$run_dir/"
++fi
+ #
+ which mpdboot 2>/dev/null
+ cc=$?
+@@ -68,7 +73,7 @@
+ if [ @NICKNAME@ = naam ] ; then
+ 	args="$args $colon $prog $parm"
+ else
+-	args="$args $colon @NPES_ARG@ $npes $here_dir/$prog $parm"
++	args="$args $colon @NPES_ARG@ $npes $run_dir/$prog $parm"
+ fi
+ 	#
+ 	# remove .* from $prog for beautification
+@@ -82,8 +87,12 @@
+ # remove .x from outs
+ #
+ echo $args
+-OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
++OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $run_dir/hostfile -wdir $run_dir $args 1>$run_dir/$outs.ft$hx 2>&1
+ cc=$?
++if [ "$run_dir" != "$here_dir" ]; then
++	find "$run_dir" -maxdepth 1 -type f -exec cp -p {} "$here_dir/" \; 2>/dev/null || true
++	rm -rf "$run_dir"
++fi
+ #
+ ./mpdexit.sh
+ mpdallexit
+-if [ $cc -eq 0 ] ; then
+-	exit 0
+-fi
++exit $cc
+--- a/gsm_runs/runscr/mpisub
++++ b/gsm_runs/runscr/mpisub
+@@ -28,6 +28,11 @@
+ n=`expr $x \/ 1 + 1`
+ #
+ sed -n "1,${TOTAL_NPES}p" $HOME/node_list | sort | uniq -c | awk '{print $2" slots="$1}' >$here_dir/hostfile
++run_dir="$here_dir"
++if stat -f -c%T "$here_dir" 2>/dev/null | grep -qx v9fs; then
++	run_dir=$(mktemp -d /tmp/isogsm_XXXXXX)
++	cp -a "$here_dir/." "$run_dir/"
++fi
+ #
+ which mpdboot 2>/dev/null
+ cc=$?
+@@ -68,7 +73,7 @@
+ if [ roses = naam ] ; then
+ 	args="$args $colon $prog $parm"
+ else
+-	args="$args $colon -np $npes $here_dir/$prog $parm"
++	args="$args $colon -np $npes $run_dir/$prog $parm"
+ fi
+ 	#
+ 	# remove .* from $prog for beautification
+@@ -82,8 +87,12 @@
+ # remove .x from outs
+ #
+ echo $args
+-OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $here_dir/hostfile -wdir $here_dir $args 1>$here_dir/$outs.ft$hx 2>&1
++OMPI_MCA_btl_sm_backing_directory=/tmp /usr/local/openmpi/bin/mpirun --allow-run-as-root --map-by :OVERSUBSCRIBE -hostfile $run_dir/hostfile -wdir $run_dir $args 1>$run_dir/$outs.ft$hx 2>&1
+ cc=$?
++if [ "$run_dir" != "$here_dir" ]; then
++	find "$run_dir" -maxdepth 1 -type f -exec cp -p {} "$here_dir/" \; 2>/dev/null || true
++	rm -rf "$run_dir"
++fi
+ #
+ ./mpdexit.sh
+ mpdallexit
+-if [ $cc -eq 0 ] ; then
+-	exit 0
+-fi
++exit $cc
