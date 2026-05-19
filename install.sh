@@ -27,6 +27,10 @@ if [ ! -d "IsoGSM" ]; then
 else
     echo "IsoGSM directory already exists, skipping checkout."
 fi
+# --- docker login ---
+echo "Logging in to Docker Hub (required to pull the image):"
+docker login || { echo "Error: Docker login failed. Please run 'docker login' manually."; exit 1; }
+
 docker pull shohei/isogsm:latest
 docker container stop isogsm
 docker container rm isogsm
