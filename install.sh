@@ -6,7 +6,22 @@
 # License: MIT
 #
 
-sudo apt install subversion wget
+# --- check Docker ---
+if ! command -v docker &> /dev/null; then
+    echo "Error: Docker is not installed."
+    echo "Please install Docker first: https://docs.docker.com/get-docker/"
+    exit 1
+fi
+
+# --- install dependencies if missing ---
+MISSING_PKGS=()
+command -v svn  &> /dev/null || MISSING_PKGS+=(subversion)
+command -v wget &> /dev/null || MISSING_PKGS+=(wget)
+if [ ${#MISSING_PKGS[@]} -gt 0 ]; then
+    echo "Installing missing packages: ${MISSING_PKGS[*]}"
+    sudo apt-get install -y "${MISSING_PKGS[@]}"
+fi
+
 svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
 cd IsoGSM
 wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/Docker/Dockerfile
