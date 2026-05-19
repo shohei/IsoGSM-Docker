@@ -44,9 +44,7 @@ docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest 
   wget -O nopbs/isogsm.patch        "$BASE_URL/nopbs/isogsm.patch"
   wget -O smallshm/isogsm_run.patch "$BASE_URL/smallshm/isogsm_run.patch"
   wget -O largeshm/isogsm_run.patch "$BASE_URL/largeshm/isogsm_run.patch"
-  echo wget -O 9pfs/isogsm_9pfs.patch "$BASE_URL/9pfs/isogsm_9pfs.patch"
   wget -O 9pfs/isogsm_9pfs.patch "$BASE_URL/9pfs/isogsm_9pfs.patch"
-  echo wget -O 9pfs/isogsm_9pfs_src.patch "$BASE_URL/9pfs/isogsm_9pfs_src.patch"
   wget -O 9pfs/isogsm_9pfs_src.patch "$BASE_URL/9pfs/isogsm_9pfs_src.patch"
   chmod a+x build.sh
   ./build.sh
