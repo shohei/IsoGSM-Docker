@@ -72,12 +72,44 @@ docker exec -it isogsm /bin/bash
 ```
 IsoGSM-Docker/
 ├── Docker/
-│   └── Dockerfile          # Ubuntu 22.04 + Intel oneAPI + OpenMPI 
+│   └── Dockerfile               # Ubuntu 22.04 + Intel oneAPI + OpenMPI
 ├── IsoGSM-patch/
-│   ├── build.sh            # Build driver (applies patches, runs configure & make)
-│   ├── isogsm.patch        # Source-level patch applied before build
-│   └── isogsm_run.patch    # Runtime patch applied after build
-└── install.sh              # One-liner installer entry point
+│   ├── build.sh                 # Build driver (detects environment, applies patches, compiles)
+│   ├── pbs/isogsm.patch         # Source patch — PBS present
+│   ├── nopbs/isogsm.patch       # Source patch — no PBS
+│   ├── smallshm/isogsm_run.patch  # Runtime patch — /dev/shm < 512 MB
+│   └── largeshm/isogsm_run.patch  # Runtime patch — /dev/shm ≥ 512 MB
+└── install.sh                   # One-liner installer entry point
+```
+
+---
+
+## Automatic Patch Selection
+
+`build.sh` selects the appropriate patch variant for each patch file independently, based on two runtime conditions detected inside the container.
+
+### `isogsm.patch` — selected by PBS presence
+
+| Condition | Variant | What it changes |
+|---|---|---|
+| `qsub` found in `PATH` | `pbs/` | Adds a guard `[ -n "$PBS_O_WORKDIR" ] && cd "$PBS_O_WORKDIR"` in the roses/guns job-script HEADER, so the generated run scripts work both inside and outside a PBS job |
+| `qsub` not found | `nopbs/` | Omits the guard (`$PBS_O_WORKDIR` is never set on non-PBS machines) |
+
+### `isogsm_run.patch` — selected by `/dev/shm` size
+
+| Condition | Variant | What it changes |
+|---|---|---|
+| `/dev/shm` < 512 MB | `smallshm/` | Sets `OMPI_MCA_btl_sm_backing_directory=/tmp` to redirect OpenMPI shared-memory segments away from the constrained `/dev/shm` (default 64 MB in Docker), preventing SIGBUS in `MPI_Alltoallv`; also applies `--allow-run-as-root`, `--map-by :OVERSUBSCRIBE`, and `slots=` hostfile format |
+| `/dev/shm` ≥ 512 MB | `largeshm/` | Uses the standard `@MPIEXEC@` template with `-hostfile` and `-wdir` options only |
+
+The two conditions are evaluated independently, so all four combinations are handled correctly.
+
+```
+           /dev/shm < 512 MB    /dev/shm >= 512 MB
+          ┌─────────────────────┬──────────────────────┐
+PBS found │ pbs + smallshm      │ pbs + largeshm        │
+no PBS    │ nopbs + smallshm    │ nopbs + largeshm      │
+          └─────────────────────┴──────────────────────┘
 ```
 
 ---
