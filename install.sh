@@ -25,9 +25,9 @@ fi
 svn co svn://210.106.80.235/GRSM/IsoGSM --username guest --password guest123
 cd IsoGSM
 docker pull shohei/isogsm:latest
-docker container stop isogsm_container
-docker container rm isogsm_container
-docker run -i -v "`pwd`:/data/" --name isogsm_container shohei/isogsm << 'EOF'
+docker container stop isogsm
+docker container rm isogsm
+docker run -i -v "`pwd`:/data/" --name isogsm shohei/isogsm:latest << 'EOF'
   set -e
   cd IsoGSM
   wget https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch/build.sh
@@ -38,8 +38,8 @@ docker run -i -v "`pwd`:/data/" --name isogsm_container shohei/isogsm << 'EOF'
   cd gsm_runs
   ./configure-scr gsm
 EOF
-docker container start isogsm_container
+docker container start isogsm
 echo "IsoGSM installation complete." 
 echo "The next step is to run the container and execute the gsm_runs:"
 echo "cd IsoGSM/gsm_runs && ./gsm"
-docker exec -it isogsm_container /bin/bash
+docker exec -it isogsm /bin/bash
