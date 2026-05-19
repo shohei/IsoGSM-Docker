@@ -5,6 +5,7 @@
 # Author : Shohei Aoki
 # License: MIT
 #
+set -e
 
 # --- check Docker ---
 if ! command -v docker &> /dev/null; then
@@ -32,8 +33,8 @@ echo "Logging in to Docker Hub (required to pull the image):"
 docker login || { echo "Error: Docker login failed. Please run 'docker login' manually."; exit 1; }
 
 docker pull shohei/isogsm:latest
-docker container stop isogsm
-docker container rm isogsm
+docker container stop isogsm 2>/dev/null || true
+docker container rm isogsm 2>/dev/null || true
 docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest << 'EOF'
   set -e
   cd /data/IsoGSM
