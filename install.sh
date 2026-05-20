@@ -39,14 +39,14 @@ docker run -i -v "`pwd`/IsoGSM:/data/IsoGSM" --name isogsm shohei/isogsm:latest 
   set -e
   cd /data/IsoGSM
   BASE_URL=https://raw.githubusercontent.com/shohei/IsoGSM-Docker/refs/heads/main/IsoGSM-patch
-  wget -O build.sh "$BASE_URL/build.sh"
+  wget -O build.sh -q --show-progress --progress=bar:force:noscroll "$BASE_URL/build.sh"
   mkdir -p pbs nopbs smallshm largeshm 9pfs
-  wget -O pbs/isogsm.patch          "$BASE_URL/pbs/isogsm.patch"
-  wget -O nopbs/isogsm.patch        "$BASE_URL/nopbs/isogsm.patch"
-  wget -O smallshm/isogsm_run.patch "$BASE_URL/smallshm/isogsm_run.patch"
-  wget -O largeshm/isogsm_run.patch "$BASE_URL/largeshm/isogsm_run.patch"
-  wget -O 9pfs/isogsm_9pfs.patch "$BASE_URL/9pfs/isogsm_9pfs.patch"
-  wget -O 9pfs/isogsm_9pfs_src.patch "$BASE_URL/9pfs/isogsm_9pfs_src.patch"
+  wget -O pbs/isogsm.patch           -q --show-progress --progress=bar:force:noscroll "$BASE_URL/pbs/isogsm.patch"
+  wget -O nopbs/isogsm.patch         -q --show-progress --progress=bar:force:noscroll "$BASE_URL/nopbs/isogsm.patch"
+  wget -O smallshm/isogsm_run.patch  -q --show-progress --progress=bar:force:noscroll "$BASE_URL/smallshm/isogsm_run.patch"
+  wget -O largeshm/isogsm_run.patch  -q --show-progress --progress=bar:force:noscroll "$BASE_URL/largeshm/isogsm_run.patch"
+  wget -O 9pfs/isogsm_9pfs.patch     -q --show-progress --progress=bar:force:noscroll "$BASE_URL/9pfs/isogsm_9pfs.patch"
+  wget -O 9pfs/isogsm_9pfs_src.patch -q --show-progress --progress=bar:force:noscroll "$BASE_URL/9pfs/isogsm_9pfs_src.patch"
   chmod a+x build.sh
   ./build.sh
   rm -rf pbs nopbs smallshm largeshm 9pfs
